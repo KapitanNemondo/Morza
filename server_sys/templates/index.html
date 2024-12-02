@@ -1,143 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MQTT Hacker Interface</title>
-    <style>
-        body {
-            background-color: black;
-            color: lime;
-            font-family: 'Courier New', Courier, monospace;
-            margin: 0;
-            padding: 0;
-        }
-        h1, h2 {
-            text-align: center;
-        }
-        .device-section {
-            border: 1px solid lime;
-            padding: 20px;
-            margin: 20px;
-            border-radius: 10px;
-            background-color: #002b00;
-        }
-        input[type="text"] {
-            width: 90%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid lime;
-            background-color: black;
-            color: lime;
-        }
-        button {
-            padding: 10px 20px;
-            margin: 10px 0;
-            border: 1px solid lime;
-            background-color: black;
-            color: lime;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: lime;
-            color: black;
-        }
-        #log {
-            border: 1px solid lime;
-            padding: 10px;
-            height: 200px;
-            overflow-y: scroll;
-            background-color: black;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MQTT Device Control Panel</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #044a04; /* Темный зеленый фон */
+      color: #aaffaa;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      height: 100vh;
+    }
+
+    .container {
+      display: flex;
+      width: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .left-section {
+      width: 60%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .device-form {
+      margin-bottom: 20px;
+      background: #033703;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .device-form h3 {
+      margin: 0 0 10px 0;
+      color: #88ff88;
+    }
+
+    .device-form label, .device-form input, .device-form button {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .device-form input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #66cc66;
+      border-radius: 5px;
+      background-color: #022702;
+      color: #aaffaa;
+    }
+
+    .device-form button {
+      padding: 8px 15px;
+      background-color: #066106;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .device-form button:hover {
+      background-color: #088808;
+    }
+
+    .right-section {
+      width: 40%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .log-section {
+      background: #033703;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+      margin-bottom: 20px;
+    }
+
+    .log-section h3 {
+      margin: 0 0 10px 0;
+      color: #88ff88;
+    }
+
+    .log {
+      overflow-y: scroll;
+      max-height: 250px;
+      background: #022702;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      color: #c2f0c2;
+    }
+
+    .status-section {
+      background: #033703;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .status-item {
+      margin-bottom: 8px;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+
+    .status-online {
+      background-color: #00ff00; /* Ярко-зеленый */
+    }
+
+    .status-offline {
+      background-color: red;
+    }
+  </style>
 </head>
 <body>
-    <h1>MQTT Hacker Interface</h1>
-    <h2>Control Panel</h2>
-    
-    <!-- Device 1 Section -->
-    <div class="device-section">
-        <h3>Device: Fakel One</h3>
-        <p>Example: ПАУК СКЕЛЕТ КРИПЕР</p>
-        <input type="text" id="fakel_one_words" placeholder="Enter words for Fakel One">
-        <button onclick="sendMessage('fakel_one')">Send to Fakel One</button>
+  <div class="container">
+    <!-- Левая секция -->
+    <div class="left-section">
+      <div class="device-form">
+        <h3>Fakel One</h3>
+        <label for="fakel_one_input">Enter sequence:</label>
+        <input type="text" id="fakel_one_input" placeholder="e.g., ПАУК СКЕЛЕТ КРИПЕР">
+        <button onclick="sendSequence('fakel_one', document.getElementById('fakel_one_input').value)">Send</button>
+      </div>
+
+      <div class="device-form">
+        <h3>Fakel Two</h3>
+        <label for="fakel_two_input">Enter sequence:</label>
+        <input type="text" id="fakel_two_input" placeholder="e.g., ПАУК СКЕЛЕТ КРИПЕР">
+        <button onclick="sendSequence('fakel_two', document.getElementById('fakel_two_input').value)">Send</button>
+      </div>
+
+      <div class="device-form">
+        <h3>Fakel Three</h3>
+        <label for="fakel_three_input">Enter sequence:</label>
+        <input type="text" id="fakel_three_input" placeholder="e.g., ПАУК СКЕЛЕТ КРИПЕР">
+        <button onclick="sendSequence('fakel_three', document.getElementById('fakel_three_input').value)">Send</button>
+      </div>
+
+      <div class="device-form">
+        <h3>Send to All (1, 2, 3)</h3>
+        <label for="send_all_input">Enter sequence:</label>
+        <input type="text" id="send_all_input" placeholder="e.g., СЛОВО1 СЛОВО2 СЛОВО3">
+        <button onclick="sendToAll(document.getElementById('send_all_input').value)">Send to All</button>
+      </div>
+
+      <div class="device-form">
+        <h3>Code Generator</h3>
+        <label for="kod_generator_input">Enter one word:</label>
+        <input type="text" id="kod_generator_input" placeholder="e.g., КРИПЕР">
+        <button onclick="sendSequence('kod_generator', document.getElementById('kod_generator_input').value)">Send</button>
+      </div>
     </div>
 
-    <!-- Device 2 Section -->
-    <div class="device-section">
-        <h3>Device: Fakel Two</h3>
-        <p>Example: ПАУК СКЕЛЕТ КРИПЕР</p>
-        <input type="text" id="fakel_two_words" placeholder="Enter words for Fakel Two">
-        <button onclick="sendMessage('fakel_two')">Send to Fakel Two</button>
+    <!-- Правая секция -->
+    <div class="right-section">
+      <div class="log-section">
+        <h3>Activity Log</h3>
+        <div class="log" id="log">No messages yet...</div>
+      </div>
+      <div class="status-section">
+        <h3>Device Status</h3>
+        <div class="status-item">
+          <div class="status-indicator status-online" id="status_fakel_one"></div>
+          Fakel One - Online
+        </div>
+        <div class="status-item">
+          <div class="status-indicator status-online" id="status_fakel_two"></div>
+          Fakel Two - Online
+        </div>
+        <div class="status-item">
+          <div class="status-indicator status-online" id="status_fakel_three"></div>
+          Fakel Three - Online
+        </div>
+        <div class="status-item">
+          <div class="status-indicator status-online" id="status_kod_generator"></div>
+          Code Generator - Online
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Device 3 Section -->
-    <div class="device-section">
-        <h3>Device: Fakel Three</h3>
-        <p>Example: ПАУК СКЕЛЕТ КРИПЕР</p>
-        <input type="text" id="fakel_three_words" placeholder="Enter words for Fakel Three">
-        <button onclick="sendMessage('fakel_three')">Send to Fakel Three</button>
-    </div>
+  <script>
+    function sendSequence(device, sequence) {
+      if (!sequence.trim()) {
+        alert("Please enter a sequence before sending.");
+        return;
+      }
 
-    <!-- Code Generator Section -->
-    <div class="device-section">
-        <h3>Device: Code Generator</h3>
-        <p>Enter a single word:</p>
-        <input type="text" id="code_generator_word" placeholder="Enter a single word">
-        <button onclick="sendMessage('code_generator')">Send to Code Generator</button>
-    </div>
+      const uppercaseSequence = sequence.toUpperCase();
 
-    <h2>Message Log</h2>
-    <div id="log">Awaiting messages...</div>
+      fetch('/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ device, message: uppercaseSequence }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            logMessage(`Sent to ${device}: ${uppercaseSequence}`);
+          } else {
+            alert(data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred while sending the message.');
+        });
+    }
 
-    <script>
-        function sendMessage(device) {
-            const log = document.getElementById('log');
-            let message;
+    function sendToAll(sequence) {
+      if (!sequence.trim()) {
+        alert("Please enter a sequence before sending.");
+        return;
+      }
 
-            switch (device) {
-                case 'fakel_one':
-                    message = document.getElementById('fakel_one_words').value.toUpperCase();
-                    if (!message) {
-                        alert('Please enter words for Fakel One!');
-                        return;
-                    }
-                    log.innerHTML += `<p>Sent to Fakel One: ${message}</p>`;
-                    break;
-                case 'fakel_two':
-                    message = document.getElementById('fakel_two_words').value.toUpperCase();
-                    if (!message) {
-                        alert('Please enter words for Fakel Two!');
-                        return;
-                    }
-                    log.innerHTML += `<p>Sent to Fakel Two: ${message}</p>`;
-                    break;
-                case 'fakel_three':
-                    message = document.getElementById('fakel_three_words').value.toUpperCase();
-                    if (!message) {
-                        alert('Please enter words for Fakel Three!');
-                        return;
-                    }
-                    log.innerHTML += `<p>Sent to Fakel Three: ${message}</p>`;
-                    break;
-                case 'code_generator':
-                    message = document.getElementById('code_generator_word').value.toUpperCase();
-                    if (!message) {
-                        alert('Please enter a word for the Code Generator!');
-                        return;
-                    }
-                    log.innerHTML += `<p>Sent to Code Generator: ${message}</p>`;
-                    break;
-                default:
-                    alert('Unknown device!');
-                    return;
-            }
+      const uppercaseSequence = sequence.toUpperCase();
 
-            // Scroll log to the bottom
-            log.scrollTop = log.scrollHeight;
+      fetch('/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ device: 'all', message: uppercaseSequence }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            logMessage(`Sent to all devices: ${uppercaseSequence}`);
+          } else {
+            alert(data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('An error occurred while sending the message.');
+        });
+    }
 
-            // TODO: Add MQTT integration here to send `message` to the specific device's topic
-        }
-    </script>
+    function logMessage(message) {
+      const log = document.getElementById('log');
+      log.innerHTML += `<div>${new Date().toLocaleTimeString()} - ${message}</div>`;
+      log.scrollTop = log.scrollHeight;
+    }
+  </script>
 </body>
 </html>

@@ -6,7 +6,7 @@
 #include <FastLED.h>
 
 #define LED_PIN_1  0
-#define TIME_INTERVAL 600
+#define TIME_INTERVAL 400
 #define TIME_OFF      800
 #define TIME_ON_INTERVAL_WORD 2000
 
@@ -22,9 +22,9 @@ const char* password = "Takeoffmai_2024"; // Замените на ваш Wi-Fi 
 const char* mqttServer = "192.168.1.20";    // IP вашего MQTT-брокера
 const int mqttPort = 1883;                 // Порт MQTT
 const char* mqttTopic = "fakel_one"; // Тема для подписки
-const char* mqttStatus = "devices/esp1/status"; 
+const char* mqttStatus = "devices/esp1/status"; // Тема для статуса
 
-
+uint16_t curTimeStatusESP = 0;
 
 
 WiFiClient espClient;
@@ -119,6 +119,7 @@ String mapWord[] = {
 void callback(char* topic, byte* payload, unsigned int length);
 void reconnect();
 void setup_wifi();
+void updateStatus(const String& status);
 
 void mqttLoop();
 
@@ -160,9 +161,9 @@ void setup() {
         Serial.println("Connecting to MQTT...");
         if (client.connect("ESP8266Client")) {  // Идентификатор клиента
             Serial.println("Connected!");
-            //client.subscribe(mqttStatus);
-            //client.publish(mqttStatus, "[STATUS] Fakel 1 - Connected");
-            client.subscribe(mqttTopic);       // Подписка на тему
+            client.subscribe(mqttStatus);  // Подписываемся на топик статуса
+            updateStatus("online");  // Отправляем статус "online" после подключения
+            client.subscribe(mqttTopic);  // Подписываемся на топик устройства
         } else {
             Serial.print("Failed, rc=");
             Serial.println(client.state());
@@ -187,6 +188,11 @@ void setup() {
 void loop() {
   mqttLoop();
   ProcessMorse();    // Обработка передачи Морзе
+
+  // if (millis() - curTimeStatusESP > 10000) {
+  //   updateStatus("online");
+  //   curTimeStatusESP = millis();
+  // }
 }
 
 // Функция для обработки сообщений MQTT
@@ -200,6 +206,12 @@ void mqttLoop() {
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Сообщение получено в топике: ");
   Serial.println(topic);
+
+  // Если топик не соответствует mqttTopic, выходим
+  if (String(topic) != mqttTopic) {
+    Serial.println("Получено сообщение с ненужного топика. Игнорируем.");
+    return; // Игнорируем сообщения, которые не с нужного топика
+  }
 
   // Переводим сообщение из байтов в строку
   String message = "";
@@ -276,6 +288,9 @@ void setup_wifi() {
   Serial.println("WiFi подключен");
 }
 
+void updateStatus(const String& status) {
+  client.publish(mqttStatus, status.c_str());
+}
 
 void ProcessMorse() {
   unsigned long now = millis();
@@ -322,7 +337,10 @@ void ProcessMorse() {
   }
 
   // Завершение текущего сигнала
-  if (now - lastActionTime >= signal * TIME_INTERVAL) {
+  int k = 0;
+  if (signal == 2) k = 3 * TIME_INTERVAL;
+  if (signal == 1) k = TIME_INTERVAL;
+  if (now - lastActionTime >= k) {
     EndSignal(); // Завершаем текущий сигнал
   }
 }

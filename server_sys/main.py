@@ -28,13 +28,17 @@ logging.basicConfig(
 # MQTT Callback для обновления статуса
 def on_message(client, userdata, msg):
     topic = msg.topic
-    if topic in topics:
-        topics[topic]["status"] = "online"
-        topics[topic]["last_seen"] = time.time()
+    payload = msg.payload.decode()
 
-client.on_message = on_message
-client.subscribe("devices/+/status")  # Подписываемся на статус всех устройств
-client.loop_start()
+    # Если получаем статус устройства (например, "online" или "offline")
+    if topic.startswith("devices/"):
+        device_name = topic.split("/")[1]  # Получаем имя устройства из топика
+        print(f"Получен статус для устройства {device_name}: {payload}")
+        if device_name in topics:
+            topics[device_name]["status"] = payload  # Обновляем статус устройства
+            topics[device_name]["last_seen"] = time.time()  # Обновляем время последнего обновления
+            logging.info(f"Обновлен статус для устройства {device_name}: {payload}")
+
 
 # Главная страница
 @app.route('/')
@@ -81,12 +85,13 @@ def send():
 # Обновление статусов
 @app.route('/status', methods=['GET'])
 def status():
-    # Обновляем статусы устройств
+    # Обновляем статусы устройств, проверяя их активность
     now = time.time()
-    for topic, data in topics.items():
+    for device, data in topics.items():
         if now - data["last_seen"] > 60:  # Считаем оффлайн, если прошло более 60 секунд
             data["status"] = "offline"
     return jsonify(topics)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+

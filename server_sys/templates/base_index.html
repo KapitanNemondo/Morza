@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Controller</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .device { margin: 10px 0; }
+        .status { font-size: 0.9em; color: gray; }
+        .online { color: green; }
+        .offline { color: red; }
+        .error { color: red; font-size: 0.9em; margin-top: 10px; }
+    </style>
+    <script>
+        async function sendMessage(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const formData = new FormData(form);
+            const response = await fetch('/send', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            const errorDiv = document.getElementById('error');
+            if (!response.ok) {
+                errorDiv.textContent = result.error;
+            } else {
+                errorDiv.textContent = '';
+                alert(result.message);
+            }
+        }
+    </script>
+    <script>
+        async function updateDeviceStatus() {
+            const response = await fetch('/status');
+            const data = await response.json();
+            
+            // Обновляем статусы на странице
+            for (const [device, info] of Object.entries(data)) {
+                const statusElement = document.getElementById(`${device}-status`);
+                statusElement.textContent = info.status;
+                if (info.status === "online") {
+                    statusElement.classList.add("online");
+                    statusElement.classList.remove("offline");
+                } else {
+                    statusElement.classList.add("offline");
+                    statusElement.classList.remove("online");
+                }
+            }
+        }
+    
+        // Периодическое обновление статусов каждые 5 секунд
+        setInterval(updateDeviceStatus, 5000);
+    </script>
+    
+    
+</head>
+<body>
+    <h1>MQTT Управление устройствами</h1>
+    <form onsubmit="sendMessage(event)">
+        <div>
+            <label for="message">Введите три слова:</label><br>
+            <input type="text" id="message" name="message" required>
+        </div>
+        <div>
+            <label>Устройства:</label><br>
+            <div class="device">
+                <input type="checkbox" id="fakel_one" name="target" value="fakel_one">
+                <label for="fakel_one">fakel_one</label>
+                <span id="fakel_one-status" class="status">unknown</span>
+            </div>
+            <div class="device">
+                <input type="checkbox" id="fakel_two" name="target" value="fakel_two">
+                <label for="fakel_two">fakel_two</label>
+                <span id="fakel_two-status" class="status">unknown</span>
+            </div>
+            <div class="device">
+                <input type="checkbox" id="fakel_three" name="target" value="fakel_three">
+                <label for="fakel_three">fakel_three</label>
+                <span id="fakel_three-status" class="status">unknown</span>
+            </div>
+            <div class="device">
+                <input type="checkbox" id="kod_generator" name="target" value="kod_generator">
+                <label for="kod_generator">kod_generator</label>
+                <span id="kod_generator-status" class="status">unknown</span>
+            </div>
+        </div>
+        <div>
+            <input type="checkbox" id="broadcast" name="broadcast">
+            <label for="broadcast">Отправить всем fakel_...</label>
+        </div>
+        <button type="submit">Отправить</button>
+    </form>
+    <div id="error" class="error"></div>
+</body>
+</html>
+
