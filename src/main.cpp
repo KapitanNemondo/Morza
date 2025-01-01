@@ -17,12 +17,16 @@
 
 CRGB leds[NUM_LEDS_1];
 
-const char* ssid = "TP1";         // Замените на ваш Wi-Fi SSID
-const char* password = "Takeoffmai_2024"; // Замените на ваш Wi-Fi пароль
-const char* mqttServer = "192.168.1.20";    // IP вашего MQTT-брокера
+const char* ssid = "X32_Mix";         // Замените на ваш Wi-Fi SSID
+const char* password = "89265357196"; // Замените на ваш Wi-Fi пароль
+//const char* mqttServer = "192.168.1.20";    // IP вашего MQTT-брокера
+const char* mqttServer = "192.168.0.103";
 const int mqttPort = 1883;                 // Порт MQTT
-const char* mqttTopic = "fakel_one"; // Тема для подписки
-const char* mqttStatus = "devices/esp1/status"; // Тема для статуса
+const char* mqttTopic = "fakel_tree"; // Тема для подписки
+const char* mqttStatus = "devices/esp3/status"; // Тема для статуса
+const char* getStatus = "getStatus"; // Сообщение о получении статуса
+const char* mqttWord = "devices/esp3/word";
+const char* ID = "esp3";
 
 uint16_t curTimeStatusESP = 0;
 
@@ -120,6 +124,7 @@ void callback(char* topic, byte* payload, unsigned int length);
 void reconnect();
 void setup_wifi();
 void updateStatus(const String& status);
+void sendWord(const String& word);
 
 void mqttLoop();
 
@@ -159,7 +164,7 @@ void setup() {
 
   while (!client.connected()) {
         Serial.println("Connecting to MQTT...");
-        if (client.connect("ESP8266Client")) {  // Идентификатор клиента
+        if (client.connect(ID)) {  // Идентификатор клиента
             Serial.println("Connected!");
             client.subscribe(mqttStatus);  // Подписываемся на топик статуса
             updateStatus("online");  // Отправляем статус "online" после подключения
@@ -206,6 +211,28 @@ void mqttLoop() {
 void callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Сообщение получено в топике: ");
   Serial.println(topic);
+
+  
+
+  if (String(topic) == mqttStatus) {
+    Serial.println("Топик статуса");
+    // Переводим сообщение из байтов в строку
+    String message = "";
+    for (int i = 0; i < length; i++) {
+      message += (char)payload[i];
+    }
+    Serial.print("Сообщение: ");
+    Serial.println(message);
+
+    if (message == getStatus) {
+      Serial.print("Отправка статуса: ");
+      updateStatus("online");  // Отправляем статус "online" после подключения
+      sendWord(mapWord[0]);
+    }
+
+    return;
+    
+  }
 
   // Если топик не соответствует mqttTopic, выходим
   if (String(topic) != mqttTopic) {
@@ -260,7 +287,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 void reconnect() {
   while (!client.connected()) {
     Serial.print("Подключение к MQTT...");
-    if (client.connect("ESP8266Client")) {
+    if (client.connect(ID)) {
       Serial.println("Подключено");
       client.subscribe(mqttTopic);
     } else {
@@ -290,6 +317,10 @@ void setup_wifi() {
 
 void updateStatus(const String& status) {
   client.publish(mqttStatus, status.c_str());
+}
+
+void sendWord(const String& word) {
+  client.publish(mqttWord, word.c_str());
 }
 
 void ProcessMorse() {
@@ -414,7 +445,12 @@ void StartSignal() {
 
   // Включаем светодиоды для текущего сигнала
   for (int i = 0; i < NUM_LEDS_1; i++) {
-    leds[i] = CRGB::Red;
+    if (signal == 1) {
+      leds[i] = CRGB::Red;
+    } else if (signal == 2) {
+      leds[i] = CRGB::Green;
+    }
+    
   }
   FastLED.show();
 
